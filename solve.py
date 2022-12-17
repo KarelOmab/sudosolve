@@ -1,7 +1,30 @@
+class Block:
+    def __init__(self, cells):
+        self.cells = cells
+    
+    def __str__(self):
+        s = []
+        # create blocks from board
+        for j in range(0, 9, 3):
+            r = self.cells[j:j+3]
+            s.append(" ".join(map(str, r)))
+        return "\n".join(s)       
+
+class Cell:
+    def __init__(self, row, col, value):
+        self.row = row
+        self.col = col
+        self.value = value
+    
+    def __str__(self):
+        return str(self.value)
+
 class Board:
 
     rows = []
     cols = []
+    blocks = [] # (9 element cell array of 3x3 blocks)
+    
 
     def __init__(self, board):
         self.board = board
@@ -12,6 +35,15 @@ class Board:
         
         for row in self.board:
             self.rows.append(row)
+        
+        # create blocks from board
+        for i in range(0, 9, 3):
+            for j in range(0, 9, 3):
+                cells = []
+                for k in range(3):
+                    for l in range(3):
+                        cells.append(self.board[i+k][j+l])
+                self.blocks.append(Block(cells))
     
     # evaluate all columns vertically
     def eval_cols(self):
@@ -56,9 +88,46 @@ class Board:
         while (self.eval_state() != "solved board"):
             self.next_move()
 
+    # this is the money maker
     def next_move(self):
         # pick a cell that contains a number, attempt to solve it
+
+        # create a dictionary that stores block indexes and the amount of blanks in them
+        d = dict()
+        for i in range(len(self.blocks)):
+            for c in self.blocks[i].cells:
+                if c.value == 0:
+                    if i in d:
+                        d[i] += 1
+                    else:
+                        d[i] = 1
+
+        # iterate through (sorted) blocks based on most filled first (0 frequency lowest)
+        for key, value in sorted(d.items(), key=lambda item: item[1]):
+
+            block = self.blocks[key]
+            
+            print(block)
+            for c in block.cells:
+                if c.value == 0:
+                    # TODO : do useful things
+                    print(c.value)
+
+            
+            
+            input()
+
+        input()
+
+        
+            
+
+        print("Make next useful move...")
+        input()
         pass
+
+    def show(self):
+        print(self)
 
     def __str__(self):
         s = []
@@ -112,31 +181,21 @@ solved = [
     [3, 4, 5, 2, 8, 6, 1, 7, 9]
 ]
 
+cell_board = []
+
+for i in range(len(board)):
+    buff = []
+    for j in range(len(board[i])):
+        buff.append(Cell(i, j, board[i][j]))
+    cell_board.append(buff)
 
 
 
 
+b = Board(cell_board)
 
-
-
-
-
-                         
-    
-
-# driver code
-#r = eval_rows(invalid)
-#c = eval_cols(invalid)
-#eval_rows_cols(r, c)
-
-
-#r = eval_rows(solved)
-#c = eval_cols(solved)
-#eval_rows_cols(r, c)
-
-b = Board(board)
-
-print(b)
+#b.show()
+b.solve_board()
 #print(b.eval_state())
    
 
