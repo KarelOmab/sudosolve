@@ -1,7 +1,9 @@
 import cv2
 import pytesseract
 
-src_img = '/Users/karelomab/Documents/GitHub/sudosolve/sudoku.png'
+#src_img = '/Users/karelomab/Desktop/sudoku.png'
+src_img = '/Users/karelomab/Documents/GitHub/sudosolve/sudoku_works.png'
+board_txt = '/Users/karelomab/Documents/GitHub/sudosolve/board.txt'
 save_images = False
 
 # Load image, grayscale, median blur, sharpen image
@@ -18,7 +20,7 @@ def proc_image(img):
 
     block_index = 0
 
-    f = open("/Users/karelomab/Documents/GitHub/sudosolve/board.txt", "a")
+    f = open(board_txt, "w+")
     
     for cnt in contours[::-1]:
         x1,y1 = cnt[0][0]
@@ -30,46 +32,40 @@ def proc_image(img):
                 #img = cv2.drawContours(img, [cnt], -1, (0,255,255), 3)
                 #cv2.putText(img, 'S', (x1+40, y1+70), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 0), 2)
                 number_block = img[y:y+h,x:x+w]
-                #cv2.imshow("Block {}".format(block_index), number_block)
-                #cv2.waitKey(0)
+                cv2.imshow("Block {}".format(block_index), number_block)
+                cv2.waitKey(0)
 
                 #extract 3x3 cells from each block
                 height, width = number_block.shape[:2]
                 cw, ch = width//3, height//3
                 margin = 5
                 cell_num = 0
+                buff = []
                 
-                
-                for i in range(9):
-                    buff = []
-                    for j in range(9):
+                for i in range(3):
+                    for j in range(3):
                         y = i * ch
                         x = j * cw
-                        cell = img[y+margin:y+ch-margin,x+margin:x+cw-margin]
+                        cell = number_block[y+margin:y+ch-margin,x+margin:x+cw-margin]
 
                         try:
                             d = pytesseract.image_to_string(cell, config = '--psm 7 outputbase digits')
-                            if not d:
-                                if save_images:
-                                    cv2.imwrite("cell_{}_empty.png".format(cell_num, cell_num), cell)
-                                buff.append('0')    #0 represents empty cell
+                            if not d and save_images:
+                                cv2.imwrite("block_{}_{}_empty.png".format(block_index, cell_num), cell)
                             else:
                                 if save_images:
-                                    cv2.imwrite("cell_{}_{}.png".format(cell_num, d), cell)
-                                buff.append(d.strip())
+                                    cv2.imwrite("block_{}_{}_{}.png".format(block_index, cell_num, d), cell)
+                            buff.append(d)
+                            print(d)
                         except:
                             pass
 
                         cell_num += 1
-                    #print(buff, " ".join(buff))
-                    f.write(" ".join(buff) + "\n")
-                    #input()
           
-                
+                f.write(" ".join(buff) + "\n")
                 #input()
-                f.close()
-                return
-    
+                block_index += 1
+    f.close()
     #cv2.imshow("Board", img)
     #cv2.waitKey(0)
     #cv2.destroyAllWindows()
