@@ -1,8 +1,8 @@
 import cv2
 import pytesseract
 
-#src_img = '/Users/karelomab/Desktop/sudoku.png'
-src_img = '/Users/karelomab/Desktop/sudoku.png'
+src_img = '/Users/karelomab/Documents/GitHub/sudosolve/sudoku.png'
+save_images = False
 
 # Load image, grayscale, median blur, sharpen image
 img = cv2.imread(src_img)
@@ -17,6 +17,8 @@ def proc_image(img):
 
 
     block_index = 0
+
+    f = open("/Users/karelomab/Documents/GitHub/sudosolve/board.txt", "a")
     
     for cnt in contours[::-1]:
         x1,y1 = cnt[0][0]
@@ -37,31 +39,37 @@ def proc_image(img):
                 margin = 5
                 cell_num = 0
                 
-                for i in range(3):
-                    for j in range(3):
+                
+                for i in range(9):
+                    buff = []
+                    for j in range(9):
                         y = i * ch
                         x = j * cw
-                        cell = number_block[y+margin:y+ch-margin,x+margin:x+cw-margin]
-
-                        #not recognizing 9 for some reason..?
+                        cell = img[y+margin:y+ch-margin,x+margin:x+cw-margin]
 
                         try:
                             d = pytesseract.image_to_string(cell, config = '--psm 7 outputbase digits')
                             if not d:
-                                cv2.imwrite("block_{}_{}_empty.png".format(block_index, cell_num), cell)
-                            else :
-                                cv2.imwrite("block_{}_{}_{}.png".format(block_index, cell_num, d), cell)
-                            print(d)
+                                if save_images:
+                                    cv2.imwrite("cell_{}_empty.png".format(cell_num, cell_num), cell)
+                                buff.append('0')    #0 represents empty cell
+                            else:
+                                if save_images:
+                                    cv2.imwrite("cell_{}_{}.png".format(cell_num, d), cell)
+                                buff.append(d.strip())
                         except:
-                            print("ex?")
-                            input()
                             pass
 
                         cell_num += 1
+                    #print(buff, " ".join(buff))
+                    f.write(" ".join(buff) + "\n")
+                    #input()
           
+                
                 #input()
-                block_index += 1
-
+                f.close()
+                return
+    
     #cv2.imshow("Board", img)
     #cv2.waitKey(0)
     #cv2.destroyAllWindows()
