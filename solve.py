@@ -79,12 +79,16 @@ class Board:
         is_blocks_completed = True
         #check all blocks
         for block in self.get_blocks():
-            buff = set()
+            buff = []
             for cell in block.cells:
                 if cell.value != 0:
-                    buff.add(cell.value)
+                    buff.append(cell.value)
+                if buff.count(cell.value) > 1:
+                    if verbose:
+                        print("Value conflict -> invalid board state!")
+                    return -1
             
-            if len(buff) != 9:
+            if len(set(buff)) != 9:
                 is_blocks_completed = False
 
         if verbose:
@@ -95,12 +99,16 @@ class Board:
         for i in range(9):
             block = self.board[i]
 
-            buff = set()
+            buff = []
             for cell in block:
                 if cell.value != 0:
-                    buff.add(cell.value)
+                    buff.append(cell.value)
+                if buff.count(cell.value) > 1:
+                    if verbose:
+                        print("Value conflict -> invalid board state!")
+                    return -1
             
-            if len(buff) != 9:
+            if len(set(buff)) != 9:
                 is_rows_completed = False
         
         if verbose:
@@ -112,19 +120,24 @@ class Board:
             
             block = [self.board[0][i] for i in range(9)]
 
-            buff = set()
+            buff = []
             for cell in block:
                 if cell.value != 0:
-                    buff.add(cell.value)
+                    buff.append(cell.value)
+                if buff.count(cell.value) > 1:
+                    if verbose:
+                        print("Value conflict -> invalid board state!")
+                    return -1
             
-            if len(buff) != 9:
+            if len(set(buff)) != 9:
                 is_cols_completed = False
         
         if verbose:
             print("is_cols_completed", is_cols_completed)
 
         if all([is_blocks_completed, is_rows_completed, is_cols_completed]):
-            return 0
+            return 0    # board is finished
+        else: return 1  # still empty cells
 
     
     def eval_cell_value(self, cell, value):
@@ -147,7 +160,7 @@ class Board:
     def solve_board(self):
         state = self.eval_board_state()
 
-        while state != 0:
+        while state == 1:
             self.next_move()
             state = self.eval_board_state() # this can be done more efficiently
 
@@ -227,9 +240,19 @@ class Board:
 
         if mi[2] == "block":
             #guess within a block
-            print("todo - guess within a block", mi)
-            input()
-            pass
+            block = self.get_blocks()[mi[1]]    #Block obj
+            cells = [c for c in block.cells]
+            missing = self.get_missing_cell_values(cells)
+
+            for c in cells:
+                if c.value == 0:
+                    for m in missing:
+                        c.value = m
+                        res = self.solve_board()
+
+                        if res == 0:
+                            return
+
         elif mi[2] == "row":
             row = self.get_rows()[mi[1]]    #row of cells
             missing = self.get_missing_cell_values(row)
@@ -255,6 +278,9 @@ class Board:
 
                         if res == 0:
                             return
+                
+                        
+
 
     # this is the money maker
     def next_move(self):
@@ -269,12 +295,6 @@ class Board:
 
             block = self.get_blocks()[key]
             
-            #print(block)
-
-            # get missing values
-            #print("---- checking block " + str(key) + " --------")
-            #print(block.get_missing_values())
-
             for v in self.get_missing_cell_values(block.cells):
                 buff = []
                 for c in block.cells:
@@ -284,40 +304,12 @@ class Board:
                         if not c.flag:
                             buff.append(c)
 
-                #print(len(buff), buff)
-
                 if len(buff) == 1:
                     # guaranteed move
-                    print("guaranteed move!", buff[0], "->", v)
                     self.board[buff[0].row][buff[0].col].value = v
-                    #self.show()
-                    #input()
-                    
                     return
 
-                else:
-                    # not guaranteed - make a guess?
-                    pass
-
-            #input()
-
-        #input()     
-            
-
-        
-        self.show()
-        self.eval_board_state()
-        print("No guaranteed moves possible, start brute forcing from this state")
-
         self.guess()
-
-        
-
-        # is the board solved?
-
-        #self.show()
-        #input()
-        #pass
 
     def show(self):
         print(self)
@@ -338,18 +330,7 @@ class Board:
 # 2. if the board is valid, find solution
 # 3. if the board is not valid, return error
 
-invalid = [
-    [5, 3, 0, 0, 7, 0, 0, 0, 0],
-    [6, 0, 0, 1, 9, 5, 0, 0, 0],
-    [0, 9, 8, 0, 0, 0, 0, 6, 0],
-    [8, 0, 0, 0, 6, 0, 0, 8, 3],
-    [4, 0, 0, 8, 0, 3, 0, 0, 1],
-    [7, 0, 0, 0, 2, 0, 0, 0, 6],
-    [0, 6, 0, 0, 0, 0, 2, 8, 0],
-    [0, 0, 0, 4, 1, 9, 0, 0, 5],
-    [5, 0, 0, 0, 8, 0, 0, 7, 9]
-]
-
+# medium board
 board = [
     [5, 3, 0, 0, 7, 0, 0, 0, 0],
     [6, 0, 0, 1, 9, 5, 0, 0, 0],
@@ -362,17 +343,20 @@ board = [
     [0, 0, 0, 0, 8, 0, 0, 7, 9]
 ]
 
-solved = [
-    [5, 3, 4, 6, 7, 8, 9, 1, 2],
-    [6, 7, 2, 1, 9, 5, 3, 4, 8],
-    [1, 9, 8, 3, 4, 2, 5, 6, 7],
-    [8, 5, 9, 7, 6, 1, 4, 2, 3],
-    [4, 2, 6, 8, 5, 3, 7, 9, 1],
-    [7, 1, 3, 9, 2, 4, 8, 5, 6],
-    [9, 6, 1, 5, 3, 7, 2, 8, 4],
-    [2, 8, 7, 4, 1, 9, 6, 3, 5],
-    [3, 4, 5, 2, 8, 6, 1, 7, 9]
-]
+#invalid board
+#board = [
+#    [5, 3, 0, 0, 7, 0, 0, 0, 0],
+#    [6, 0, 0, 1, 9, 5, 0, 0, 0],
+#    [0, 9, 8, 0, 0, 0, 0, 6, 0],
+#    [8, 0, 0, 0, 6, 0, 0, 8, 3],
+#    [4, 0, 0, 8, 0, 3, 0, 0, 1],
+#    [7, 0, 0, 0, 2, 0, 0, 0, 6],
+#    [0, 6, 0, 0, 0, 0, 2, 8, 0],
+#    [0, 0, 0, 4, 1, 9, 0, 0, 5],
+#    [5, 0, 0, 0, 8, 0, 0, 7, 9]
+#]
+
+
 
 cell_board = []
 
