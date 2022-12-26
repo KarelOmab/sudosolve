@@ -2,6 +2,7 @@ import cv2
 import pytesseract
 
 src_img = '/Users/karelomab/Documents/GitHub/sudosolve/sudoku.png'
+board_file = "/Users/karelomab/Documents/GitHub/sudosolve/board.txt"
 save_images = False
 
 # Load image, grayscale, median blur, sharpen image
@@ -18,7 +19,7 @@ def proc_image(img):
 
     block_index = 0
 
-    f = open("/Users/karelomab/Documents/GitHub/sudosolve/board.txt", "a")
+    f = open(board_file, "w+")
     
     for cnt in contours[::-1]:
         x1,y1 = cnt[0][0]
@@ -57,6 +58,7 @@ def proc_image(img):
                                 if save_images:
                                     cv2.imwrite("cell_{}_{}.png".format(cell_num, d), cell)
                                 buff.append(d.strip())
+                            print(d)
                         except:
                             pass
 
